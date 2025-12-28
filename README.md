@@ -1,6 +1,6 @@
-# Nested
+# NestBuilder
 
-Nested helps you move to a new city with ease by matching you with places based on your lifestyle preferences. By analyzing your Google Maps search history, Nested understands your preferences and provides tailored suggestions for nearby grocery stores, gyms, museums, or any type of place you can think of!
+NestBuilder helps you move to a new city with ease by matching you with places based on your lifestyle preferences. By analyzing your Google Maps search history, Nested understands your preferences and provides tailored suggestions for nearby grocery stores, gyms, museums, or any type of place you can think of!
 
 ## Getting Started
 
@@ -8,7 +8,7 @@ These instructions will guide you on how to set up and run Nested locally for de
 
 ### Prerequisites
 
-To run Nested, you will need:
+To run NestBuilder, you will need:
 
 - Node.js and npm for the client
 - Python 3 and pip for the server
@@ -90,7 +90,7 @@ If you're interested in contributing to Nested, please read through the project 
 
 ### Main Author
 
-- **Eesha Moona** - _Initial work_ - [eeshamoona@gmail.com](mailto:eeshamoona@gmail.com)
+- **Sathvik Vempati** Email: Vempati.honey@gmail.com
 
 ## Acknowledgments
 
