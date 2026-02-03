@@ -61,7 +61,7 @@ def generate_content_with_file(file, system_instruction):
       content = f.read(900000)
 
   model = genai.GenerativeModel(
-      "models/gemini-2.0-flash",
+      "models/gemini-3-flash-preview",
       system_instruction=system_instruction,
       generation_config=GENERATION_CONFIG,
       safety_settings=SAFETY_SETTINGS,

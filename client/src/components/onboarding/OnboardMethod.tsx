@@ -425,7 +425,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
         Let’s Make Your New City Feel Like Home
       </Typography>
       <Typography variant="body2" sx={{ textAlign: "center" }}>
-        Nested leverages Gemini 2.5 (Google’s LLM) to find places in your new
+        Nested leverages Gemini 3 (Google’s LLM) to find places in your new
         city that can facilitate your lifestyle.
       </Typography>
       <Typography variant="body2" mb="1.5rem" sx={{ textAlign: "center" }}>

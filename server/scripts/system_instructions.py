@@ -30,7 +30,7 @@ def generate_content(system_instruction, search_prompt):
   ]
 
   model = genai.GenerativeModel(
-    "models/gemini-2.0-flash",
+    "models/gemini-3-flash-preview",
     system_instruction=system_instruction,
     generation_config=GENERATION_CONFIG,
     safety_settings=SAFETY_SETTINGS,
