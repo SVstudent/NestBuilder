@@ -16,24 +16,28 @@ def extract_json_from_output(output):
     pattern = r'```json\n([\s\S]*?)\n```'
     match = re.search(pattern, output)
     
+    json_string = ""
     if match:
-        # Extracting the JSON string from the regex match
         json_string = match.group(1)
-        
-        # Correctly handling escape sequences
-        # First, ensure backslashes are correctly interpreted
-        json_string = json_string.replace('\\\\', '\\')
-        # Then replace escaped double quotes
-        json_string = json_string.replace('\\"', '"')
-        
-        # Converting the JSON string into a Python dictionary
-        try:
-            return json.loads(json_string)
-        except json.JSONDecodeError as e:
-            print("Error decoding JSON:", e)
-            raise e
     else:
-        print("No JSON found")
+        # Try to find the first '{' and last '}' if no markdown block
+        start_index = output.find('{')
+        end_index = output.rfind('}')
+        if start_index != -1 and end_index != -1:
+            json_string = output[start_index:end_index+1]
+        else:
+            print("No JSON found")
+            return None
+    
+    # Correctly handling escape sequences
+    json_string = json_string.replace('\\\\', '\\')
+    json_string = json_string.replace('\\"', '"')
+    
+    # Converting the JSON string into a Python dictionary
+    try:
+        return json.loads(json_string)
+    except json.JSONDecodeError as e:
+        print("Error decoding JSON:", e)
         return None
 
 def generate_content_with_file(file, system_instruction):
@@ -61,7 +65,7 @@ def generate_content_with_file(file, system_instruction):
       content = f.read(900000)
 
   model = genai.GenerativeModel(
-      "models/gemini-3-flash-preview",
+      "models/gemini-2.0-flash",
       system_instruction=system_instruction,
       generation_config=GENERATION_CONFIG,
       safety_settings=SAFETY_SETTINGS,
@@ -77,7 +81,9 @@ def generate_content_with_file(file, system_instruction):
           response = model.generate_content(["Follow the system instructions", content])
           print("Original Response", response.text)
           newText = extract_json_from_output(response.text)
-          break  # If successful, break the loop
+          if newText:
+              break  # If successful, break the loop
+          print("Failed to extract JSON. Retrying...")
       except DeadlineExceeded:
           print("Deadline exceeded. Retrying in 1 second...")
           time.sleep(1)

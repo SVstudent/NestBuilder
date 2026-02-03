@@ -9,8 +9,26 @@ import time
 load_dotenv()
 
 def extract_json_from_output(output):
-  replaced_output = output.replace("```json", "").replace("```", "")
-  return json.loads(replaced_output)
+  # Try to find JSON in markdown code blocks first
+  pattern = r'```json\n([\s\S]*?)\n```'
+  match = re.search(pattern, output)
+  if match:
+    try:
+      return json.loads(match.group(1))
+    except json.JSONDecodeError:
+      pass
+
+  # If no markdown block or it failed to parse, try to find the first '{' and last '}'
+  try:
+    start_index = output.find('{')
+    end_index = output.rfind('}')
+    if start_index != -1 and end_index != -1:
+      json_str = output[start_index:end_index+1]
+      return json.loads(json_str)
+  except (json.JSONDecodeError, ValueError):
+    pass
+
+  return None
 
 def generate_content(system_instruction, search_prompt):
   API_KEY = os.getenv('REACT_APP_geminiAIKey', "")
@@ -30,7 +48,7 @@ def generate_content(system_instruction, search_prompt):
   ]
 
   model = genai.GenerativeModel(
-    "models/gemini-3-flash-preview",
+    "models/gemini-2.0-flash",
     system_instruction=system_instruction,
     generation_config=GENERATION_CONFIG,
     safety_settings=SAFETY_SETTINGS,
@@ -43,7 +61,9 @@ def generate_content(system_instruction, search_prompt):
       response = model.generate_content(["Follow the system instructions and", search_prompt])
       print("Original Response", response.text)
       newText = extract_json_from_output(response.text)
-      break  # If successful, break the loop
+      if newText:
+        break  # If successful, break the loop
+      print("Failed to extract JSON from response. Retrying...")
     except DeadlineExceeded:
       print("Deadline exceeded. Retrying in 1 second...")
       time.sleep(1)

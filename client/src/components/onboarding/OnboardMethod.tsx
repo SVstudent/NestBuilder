@@ -253,10 +253,17 @@ const OnboardMethod = (props: OnboardPageProps) => {
     setCategoriesInstructionStatus("loading");
     setSocialPreferencesInstructionStatus("loading");
 
-    await getAddressData(file);
-    await getTransportationData(file);
-    await getCategoriesData(file);
-    await getSocialPreferencesData(file);
+    try {
+      // Execute sequentially to avoid overwhelming the backend
+      await getAddressData(file);
+      await getTransportationData(file);
+      await getCategoriesData(file);
+      await getSocialPreferencesData(file);
+    } catch (error) {
+      console.error("Critical error during file onboarding process:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle local file upload (alternative to Google Drive)
@@ -425,8 +432,8 @@ const OnboardMethod = (props: OnboardPageProps) => {
         Let’s Make Your New City Feel Like Home
       </Typography>
       <Typography variant="body2" sx={{ textAlign: "center" }}>
-        Nested leverages Gemini 3 (Google’s LLM) to find places in your new
-        city that can facilitate your lifestyle.
+        Nested leverages Gemini (Google’s latest LLM) to find places in your
+        new city that can facilitate your lifestyle.
       </Typography>
       <Typography variant="body2" mb="1.5rem" sx={{ textAlign: "center" }}>
         First, please answer some questions so Nested can provide better
