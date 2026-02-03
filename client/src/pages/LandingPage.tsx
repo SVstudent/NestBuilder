@@ -99,8 +99,8 @@ const LandingPage = () => {
         content: <AboutUsPage />,
       },
       {
-        id: "success",
-        title: "Our Success",
+        id: "features",
+        title: "Features",
         content: <SuccessPage />,
       },
       {

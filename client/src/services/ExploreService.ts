@@ -65,6 +65,10 @@ export const getCategoryPrompt = (
   category: CategoryModel,
   categoryTitle?: string
 ) => {
+  if (!category) {
+    return "";
+  }
+
   if (!categoryTitle) {
     categoryTitle = category.title;
   }
@@ -73,7 +77,7 @@ export const getCategoryPrompt = (
     ? `in the ${category.costPreference} price range`
     : "";
   const environmentDescriptors =
-    category.environmentDescriptors.length > 0
+    category.environmentDescriptors && category.environmentDescriptors.length > 0
       ? `with a vibe of ${category.environmentDescriptors.join(", ")}`
       : "";
   const userPreferences = category.userPreferences
@@ -119,7 +123,7 @@ export const generateAPIRequest = async (
 
   const categoryPrompt = getCategoryPrompt(category, categoryTitle);
 
-  return fetch("http://localhost:5000/generate-content", {
+  return fetch("https://nestbuilder-api-138172744112.us-central1.run.app/generate-content", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

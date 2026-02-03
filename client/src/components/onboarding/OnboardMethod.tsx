@@ -49,29 +49,77 @@ const OnboardMethod = (props: OnboardPageProps) => {
     setSocialPreferencesInstructionStatus,
   ] = useState<"loading" | "done" | "error">("loading");
 
+  // Load existing progress from Firebase on mount
+  useEffect(() => {
+    if (auth?.user) {
+      const userRef = ref(database, `users/${auth.user.id}`);
+      get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+
+          // Check for address data
+          if (userData.homeAddress || userData.workAddress) {
+            setAddressInstructionStatus("done");
+          } else {
+            setAddressInstructionStatus("loading");
+          }
+
+          // Check for transportation data
+          if (userData.transportations && Object.keys(userData.transportations).length > 0) {
+            setTransportationInstructionStatus("done");
+          } else {
+            setTransportationInstructionStatus("loading");
+          }
+
+          // Check for categories data
+          if (userData.categories && Object.keys(userData.categories).length > 0) {
+            setCategoriesInstructionStatus("done");
+          } else {
+            setCategoriesInstructionStatus("loading");
+          }
+
+          // Check for social preferences data
+          if (userData.socialPreferences && Object.keys(userData.socialPreferences).length > 0) {
+            setSocialPreferencesInstructionStatus("done");
+          } else {
+            setSocialPreferencesInstructionStatus("loading");
+          }
+
+          if (userData.birthday && userData.gender) {
+            setBirthday(new Date(userData.birthday));
+            setGender(userData.gender);
+          } else {
+            fetchGoogleInfo();
+          }
+        } else {
+          // Initialize states if no user data found
+          setAddressInstructionStatus("loading");
+          setTransportationInstructionStatus("loading");
+          setCategoriesInstructionStatus("loading");
+          setSocialPreferencesInstructionStatus("loading");
+          fetchGoogleInfo();
+        }
+      }).catch((error) => {
+        console.error("Error loading initial onboarding state:", error);
+      });
+    }
+  }, [auth?.user]);
+
   // Function to generate the address data and save it to the database
   const getAddressData = useCallback(
     async (file: any) => {
       try {
+        setAddressInstructionStatus("loading");
         const addressInstruction = createAddressInstruction();
         const addressData = await sendProfileRequest(addressInstruction, file);
         console.log("Address Data: ", addressData);
         if (auth?.user) {
           const userRef = ref(database, `users/${auth.user.id}`);
-          get(userRef)
-            .then((snapshot) => {
-              if (snapshot.exists()) {
-                const updates: Partial<UserModel> = {
-                  homeAddress: addressData.homeAddress,
-                  workAddress: addressData.workAddress,
-                };
-
-                update(userRef, updates);
-              }
-            })
-            .catch((error) => {
-              console.error("Error updating user data:", error);
-            });
+          const updates: Partial<UserModel> = {
+            homeAddress: addressData.homeAddress,
+            workAddress: addressData.workAddress,
+          };
+          await update(userRef, updates);
         }
         setAddressInstructionStatus("done");
       } catch (error) {
@@ -86,6 +134,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
   const getTransportationData = useCallback(
     async (file: any) => {
       try {
+        setTransportationInstructionStatus("loading");
         const transportationInstruction = createTransportationInstruction();
         const transportationData = await sendProfileRequest(
           transportationInstruction,
@@ -93,27 +142,21 @@ const OnboardMethod = (props: OnboardPageProps) => {
         );
         console.log("Transportation Data: ", transportationData);
         if (auth?.user) {
-          const updates: TransportationModel[] =
+          const transportations: TransportationModel[] =
             transportationData.transportation;
 
-          //first clear any existing transportation
+          // Construct the full object to update at once to avoid race conditions
+          const transportationsObj: { [key: string]: TransportationModel } = {};
+          transportations.forEach((t) => {
+            transportationsObj[t.method] = t;
+          });
+
           const userRef = ref(
             database,
             `users/${auth.user.id}/transportations`
           );
-          set(userRef, {}).catch((error) => {
-            console.error("Error updating user data:", error);
-          });
-
-          updates.forEach((transportation) => {
-            const userRef = ref(
-              database,
-              `users/${auth.user?.id}/transportations/${transportation.method}`
-            );
-            set(userRef, transportation).catch((error) => {
-              console.error("Error updating user data:", error);
-            });
-          });
+          // Set the entire collection at once
+          await set(userRef, transportationsObj);
         }
         setTransportationInstructionStatus("done");
       } catch (error) {
@@ -128,6 +171,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
   const getCategoriesData = useCallback(
     async (file: any) => {
       try {
+        setCategoriesInstructionStatus("loading");
         const categoriesInstruction = createCategoriesInstruction();
         const categoriesData = await sendProfileRequest(
           categoriesInstruction,
@@ -135,23 +179,16 @@ const OnboardMethod = (props: OnboardPageProps) => {
         );
         console.log("Categories Data: ", categoriesData);
         if (auth?.user) {
-          const updates: CategoryModel[] = categoriesData.categories;
+          const categories: CategoryModel[] = categoriesData.categories;
 
-          //first clear any existing categories
+          // Construct the full object to update at once
+          const categoriesObj: { [key: string]: CategoryModel } = {};
+          categories.forEach((c) => {
+            categoriesObj[c.title] = c;
+          });
+
           const userRef = ref(database, `users/${auth.user.id}/categories`);
-          set(userRef, {}).catch((error) => {
-            console.error("Error updating user data:", error);
-          });
-
-          updates.forEach((category) => {
-            const userRef = ref(
-              database,
-              `users/${auth.user?.id}/categories/${category.title}`
-            );
-            set(userRef, category).catch((error) => {
-              console.error("Error updating user data:", error);
-            });
-          });
+          await set(userRef, categoriesObj);
         }
         setCategoriesInstructionStatus("done");
       } catch (error) {
@@ -166,6 +203,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
   const getSocialPreferencesData = useCallback(
     async (file: any) => {
       try {
+        setSocialPreferencesInstructionStatus("loading");
         const socialPreferencesInstruction =
           createSocialPreferencesInstruction();
         const socialPreferencesData = await sendProfileRequest(
@@ -175,54 +213,42 @@ const OnboardMethod = (props: OnboardPageProps) => {
         console.log("Social Preferences Data: ", socialPreferencesData);
         if (auth?.user) {
           const socialPreferences: SocialPreferenceModel[] =
-            socialPreferencesData.socialPreferences;
+            socialPreferencesData.socialPreferences || [];
 
-          const otherPreferences: any = socialPreferencesData.otherPreferences;
+          const otherPreferences: any[] = socialPreferencesData.otherPreferences || [];
           const lifestylePreferences: string =
-            socialPreferencesData.lifestyleParagraph;
+            socialPreferencesData.lifestyleParagraph || "";
 
           console.log("Other Preferences: ", otherPreferences);
           console.log("Lifestyle Preferences: ", lifestylePreferences);
 
-          //first clear any existing social preferences
+          // Construct the full object for update
+          const prefsObj: { [key: string]: SocialPreferenceModel } = {};
+
+          socialPreferences.forEach((sp) => {
+            prefsObj[sp.name] = sp;
+          });
+
+          otherPreferences.forEach((name: string) => {
+            if (!prefsObj[name]) {
+              prefsObj[name] = {
+                name,
+                selected: false,
+              };
+            }
+          });
+
           const userRef = ref(
             database,
             `users/${auth.user.id}/socialPreferences`
           );
-          set(userRef, {}).catch((error) => {
-            console.error("Error updating user data:", error);
-          });
-
-          socialPreferences.forEach((socialPreference) => {
-            const socialPrefRef = ref(
-              database,
-              `users/${auth.user?.id}/socialPreferences/${socialPreference.name}`
-            );
-            set(socialPrefRef, socialPreference).catch((error) => {
-              console.error("Error updating user data:", error);
-            });
-          });
-
-          otherPreferences.forEach((otherPreference: string) => {
-            const socialPrefRef = ref(
-              database,
-              `users/${auth.user?.id}/socialPreferences/${otherPreference}`
-            );
-            set(socialPrefRef, {
-              name: otherPreference,
-              selected: false,
-            }).catch((error) => {
-              console.error("Error updating user data:", error);
-            });
-          });
+          await set(userRef, prefsObj);
 
           const lifestyleRef = ref(
             database,
             `users/${auth.user.id}/lifestylePreferences`
           );
-          update(lifestyleRef, { lifestylePreferences }).catch((error) => {
-            console.error("Error updating user data:", error);
-          });
+          await update(lifestyleRef, { lifestylePreferences });
         }
         setSocialPreferencesInstructionStatus("done");
       } catch (error) {
@@ -281,7 +307,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
           console.log("File metadata: ", file);
 
           try {
-            fetch("http://localhost:5000/get-google-drive-file", {
+            fetch("https://nestbuilder-api-138172744112.us-central1.run.app/get-google-drive-file", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -327,7 +353,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
     }
 
     if (!birthday || !gender) {
-      const response = await fetch("http://localhost:5000/fetch-people-info", {
+      const response = await fetch("https://nestbuilder-api-138172744112.us-central1.run.app/fetch-people-info", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -370,26 +396,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
     }
   }, [birthday, gender]);
 
-  useEffect(() => {
-    if (auth?.user) {
-      const userRef = ref(database, `users/${auth.user.id}`);
-      get(userRef)
-        .then((snapshot) => {
-          if (snapshot.exists()) {
-            const user = snapshot.val();
-            if (user.birthday && user.gender) {
-              setBirthday(user.birthday);
-              setGender(user.gender);
-            } else {
-              fetchGoogleInfo();
-            }
-          }
-        })
-        .catch((error) => {
-          console.error("Error getting user data:", error);
-        });
-    }
-  }, [auth?.user, fetchGoogleInfo]);
+  // No need for a separate useEffect to load user data as it's now handled in the initialization useEffect at the top
 
   useEffect(() => {
     props.registerSave(saveData);

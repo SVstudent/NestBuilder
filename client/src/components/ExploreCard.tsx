@@ -42,7 +42,7 @@ const ExploreCard = ({ result }: ExploreCardProps) => {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/get-google-place-info?address=${encodeURIComponent(
+          `https://nestbuilder-api-138172744112.us-central1.run.app/get-google-place-info?address=${encodeURIComponent(
             result.address
           )}&place=${encodeURIComponent(
             result.place

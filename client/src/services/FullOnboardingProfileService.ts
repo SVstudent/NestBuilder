@@ -80,7 +80,7 @@ export function sendProfileRequest(instructionPart: string, file: File) {
   const systemInstruction = baseInstruction + task + instructionPart;
   formData.append("system_instruction", systemInstruction);
 
-  return fetch("http://localhost:5000/generate-profile", {
+  return fetch("https://nestbuilder-api-138172744112.us-central1.run.app/generate-profile", {
     method: "POST",
     body: formData,
   })

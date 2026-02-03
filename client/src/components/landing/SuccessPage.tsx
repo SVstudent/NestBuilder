@@ -10,7 +10,6 @@ import {
   Stack,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import DevPostLogo from "../../assets/devpost-logo.png";
 
 const features = [
   {
@@ -37,7 +36,7 @@ const SuccessPage = () => {
   return (
     <Container>
       <section
-        id="success"
+        id="features"
         style={{
           padding: "2em 0",
           textAlign: "center",
@@ -47,17 +46,13 @@ const SuccessPage = () => {
           variant="h4"
           style={{ color: "#004d40", marginBottom: "1em" }}
         >
-          Success Story
-        </Typography>
-        <Typography variant="h5" style={{ margin: "1em 0" }}>
-          🏆 Nested proudly won 1st place at the Google Gen AI Hackathon 2024!
-          🏆
+          Key Features
         </Typography>
         <Typography
           variant="body1"
           style={{ marginBottom: "2em", padding: "0 2em" }}
         >
-          Nested helps you move to a new city with ease by matching you with
+          NestBuilder helps you move to a new city with ease by matching you with
           places based on your lifestyle. It analyzes your Google Maps search
           history to understand your preferences, and then provides tailored
           suggestions to nearby grocery stores, gyms, museums, and more!
@@ -69,29 +64,7 @@ const SuccessPage = () => {
           gap={"1rem"}
         >
           <Link
-            href="https://devpost.com/software/nested"
-            target="_blank"
-            style={{ textDecoration: "none" }}
-          >
-            <Button
-              startIcon={
-                <img
-                  src={DevPostLogo}
-                  alt="DevPost Logo"
-                  style={{ width: 24 }}
-                />
-              }
-              variant="outlined"
-              color="success"
-              style={{
-                marginBottom: "2em",
-              }}
-            >
-              View Devpost Entry
-            </Button>
-          </Link>
-          <Link
-            href="https://github.com/sathvikvempati/NestMover"
+            href="https://github.com/SVstudent/NestBuilder"
             target="_blank"
             style={{ textDecoration: "none" }}
           >
@@ -111,7 +84,7 @@ const SuccessPage = () => {
           variant="h5"
           style={{ color: "#004d40", marginBottom: "1em" }}
         >
-          Key Features
+          What We Offer
         </Typography>
         <Grid container spacing={2} justifyContent="center">
           {features.map((feature) => (

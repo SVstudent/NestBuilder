@@ -75,7 +75,7 @@ export const getProfileData = (file: File) => {
   formData.append("file", file);
   formData.append("system_instruction", SYSTEM_INSTRUCTION + JSON_PROMPT);
 
-  return fetch("http://localhost:5000/generate-profile", {
+  return fetch("https://nestbuilder-api-138172744112.us-central1.run.app/generate-profile", {
     method: "POST",
     body: formData,
   })

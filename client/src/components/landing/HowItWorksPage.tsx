@@ -5,27 +5,19 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  Box,
 } from "@mui/material";
 import React from "react";
-import YouTube, { YouTubeProps } from "react-youtube";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ExploreIcon from "@mui/icons-material/Explore";
 
 const HowItWorksPage = () => {
-  const opts: YouTubeProps["opts"] = {
-    height: "390",
-    width: "640",
-    playerVars: {
-      autoplay: 0,
-    },
-  };
-
   return (
     <Grid container spacing={2} sx={{ padding: "2rem" }}>
       <Grid item xs={12} md={6}>
         <Typography variant="h5" gutterBottom>
           How it Works
         </Typography>
-        {/* TODO: Make each of these steps go to the part of the demo that it corresponds */}
         <List>
           <ListItem>
             <ListItemIcon>
@@ -69,11 +61,19 @@ const HowItWorksPage = () => {
         </List>
       </Grid>
       <Grid item xs={12} md={6} textAlign={"center"}>
-        <YouTube
-          videoId={`Qyf--S0LUlk`}
-          title={"Nested Demo Video"}
-          opts={opts}
-        />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+            backgroundColor: "#e8f5e9",
+            borderRadius: "12px",
+            padding: "2rem",
+          }}
+        >
+          <ExploreIcon sx={{ fontSize: 120, color: "#4caf50" }} />
+        </Box>
       </Grid>
     </Grid>
   );
