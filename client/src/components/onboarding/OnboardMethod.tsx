@@ -99,19 +99,31 @@ const OnboardMethod = (props: OnboardPageProps) => {
         setAddressInstructionStatus("loading");
         const addressInstruction = createAddressInstruction();
         const addressData = await sendProfileRequest(addressInstruction, file);
-        console.log("Address Data: ", addressData);
+        console.log("Address Data received: ", addressData);
+
+        // Validate the response
+        if (!addressData) {
+          throw new Error("No address data received from API");
+        }
+        if (!addressData.homeAddress && !addressData.workAddress) {
+          console.warn("Address data is missing both homeAddress and workAddress");
+        }
+
         if (auth?.user) {
           const userRef = ref(database, `users/${auth.user.id}`);
           const updates: Partial<UserModel> = {
-            homeAddress: addressData.homeAddress,
-            workAddress: addressData.workAddress,
+            homeAddress: addressData.homeAddress || "",
+            workAddress: addressData.workAddress || "",
           };
+          console.log("Saving address updates to Firebase:", updates);
           await update(userRef, updates);
+          console.log("Address data saved successfully");
         }
         setAddressInstructionStatus("done");
       } catch (error) {
         console.error("Error getting address data:", error);
         setAddressInstructionStatus("error");
+        throw error; // Re-throw to be caught by uploadFile
       }
     },
     [auth?.user]
@@ -127,28 +139,43 @@ const OnboardMethod = (props: OnboardPageProps) => {
           transportationInstruction,
           file
         );
-        console.log("Transportation Data: ", transportationData);
+        console.log("Transportation Data received: ", transportationData);
+
+        // Validate the response
+        if (!transportationData) {
+          throw new Error("No transportation data received from API");
+        }
+        if (!transportationData.transportation || !Array.isArray(transportationData.transportation)) {
+          throw new Error("Invalid transportation data format - expected 'transportation' array");
+        }
+        if (transportationData.transportation.length === 0) {
+          console.warn("Transportation array is empty");
+        }
+
         if (auth?.user) {
-          const transportations: TransportationModel[] =
-            transportationData.transportation;
+          const transportations: TransportationModel[] = transportationData.transportation;
 
           // Construct the full object to update at once to avoid race conditions
           const transportationsObj: { [key: string]: TransportationModel } = {};
           transportations.forEach((t) => {
-            transportationsObj[t.method] = t;
+            if (t && t.method) {
+              transportationsObj[t.method] = t;
+            }
           });
 
+          console.log("Saving transportation to Firebase:", transportationsObj);
           const userRef = ref(
             database,
             `users/${auth.user.id}/transportations`
           );
-          // Set the entire collection at once
           await set(userRef, transportationsObj);
+          console.log("Transportation data saved successfully");
         }
         setTransportationInstructionStatus("done");
       } catch (error) {
         console.error("Error getting transportation data:", error);
         setTransportationInstructionStatus("error");
+        throw error;
       }
     },
     [auth?.user]
@@ -164,23 +191,40 @@ const OnboardMethod = (props: OnboardPageProps) => {
           categoriesInstruction,
           file
         );
-        console.log("Categories Data: ", categoriesData);
+        console.log("Categories Data received: ", categoriesData);
+
+        // Validate the response
+        if (!categoriesData) {
+          throw new Error("No categories data received from API");
+        }
+        if (!categoriesData.categories || !Array.isArray(categoriesData.categories)) {
+          throw new Error("Invalid categories data format - expected 'categories' array");
+        }
+        if (categoriesData.categories.length === 0) {
+          console.warn("Categories array is empty");
+        }
+
         if (auth?.user) {
           const categories: CategoryModel[] = categoriesData.categories;
 
           // Construct the full object to update at once
           const categoriesObj: { [key: string]: CategoryModel } = {};
           categories.forEach((c) => {
-            categoriesObj[c.title] = c;
+            if (c && c.title) {
+              categoriesObj[c.title] = c;
+            }
           });
 
+          console.log("Saving categories to Firebase:", categoriesObj);
           const userRef = ref(database, `users/${auth.user.id}/categories`);
           await set(userRef, categoriesObj);
+          console.log("Categories data saved successfully");
         }
         setCategoriesInstructionStatus("done");
       } catch (error) {
         console.error("Error getting categories data:", error);
         setCategoriesInstructionStatus("error");
+        throw error;
       }
     },
     [auth?.user]
@@ -197,7 +241,13 @@ const OnboardMethod = (props: OnboardPageProps) => {
           socialPreferencesInstruction,
           file
         );
-        console.log("Social Preferences Data: ", socialPreferencesData);
+        console.log("Social Preferences Data received: ", socialPreferencesData);
+
+        // Validate the response
+        if (!socialPreferencesData) {
+          throw new Error("No social preferences data received from API");
+        }
+
         if (auth?.user) {
           const socialPreferences: SocialPreferenceModel[] =
             socialPreferencesData.socialPreferences || [];
@@ -206,6 +256,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
           const lifestylePreferences: string =
             socialPreferencesData.lifestyleParagraph || "";
 
+          console.log("Social Preferences: ", socialPreferences);
           console.log("Other Preferences: ", otherPreferences);
           console.log("Lifestyle Preferences: ", lifestylePreferences);
 
@@ -213,11 +264,13 @@ const OnboardMethod = (props: OnboardPageProps) => {
           const prefsObj: { [key: string]: SocialPreferenceModel } = {};
 
           socialPreferences.forEach((sp) => {
-            prefsObj[sp.name] = sp;
+            if (sp && sp.name) {
+              prefsObj[sp.name] = sp;
+            }
           });
 
           otherPreferences.forEach((name: string) => {
-            if (!prefsObj[name]) {
+            if (name && !prefsObj[name]) {
               prefsObj[name] = {
                 name,
                 selected: false,
@@ -225,22 +278,28 @@ const OnboardMethod = (props: OnboardPageProps) => {
             }
           });
 
+          console.log("Saving social preferences to Firebase:", prefsObj);
           const userRef = ref(
             database,
             `users/${auth.user.id}/socialPreferences`
           );
           await set(userRef, prefsObj);
+          console.log("Social preferences saved successfully");
 
-          const lifestyleRef = ref(
-            database,
-            `users/${auth.user.id}/lifestylePreferences`
-          );
-          await update(lifestyleRef, { lifestylePreferences });
+          if (lifestylePreferences) {
+            const lifestyleRef = ref(
+              database,
+              `users/${auth.user.id}/lifestylePreferences`
+            );
+            await update(lifestyleRef, { lifestylePreferences });
+            console.log("Lifestyle preferences saved successfully");
+          }
         }
         setSocialPreferencesInstructionStatus("done");
       } catch (error) {
         console.error("Error getting social preferences data:", error);
         setSocialPreferencesInstructionStatus("error");
+        throw error;
       }
     },
     [auth?.user]

@@ -80,23 +80,34 @@ export function sendProfileRequest(instructionPart: string, file: File) {
   const systemInstruction = baseInstruction + task + instructionPart;
   formData.append("system_instruction", systemInstruction);
 
+  console.log("Sending profile request to API...");
+  console.log("File:", file.name, "Size:", file.size);
+  console.log("Instruction part length:", instructionPart.length);
+
   return fetch("https://nestbuilder-api-138172744112.us-central1.run.app/generate-profile", {
     method: "POST",
     body: formData,
   })
-    .then((response) => {
+    .then(async (response) => {
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorMessage = data?.error || `HTTP error! status: ${response.status}`;
+        console.error("API returned error:", errorMessage);
+        throw new Error(errorMessage);
       }
-      return response.json();
-    })
-    .then((data) => {
-      // data is already a json
-      console.log("Received JSON data:", data);
+
+      // Check if the response contains an error field
+      if (data?.error) {
+        console.error("API returned error in response body:", data.error);
+        throw new Error(data.error);
+      }
+
+      console.log("Received JSON data from API:", data);
       return data;
     })
     .catch((error) => {
-      console.error("Error:", error);
+      console.error("Error in sendProfileRequest:", error);
       throw error;
     });
 }

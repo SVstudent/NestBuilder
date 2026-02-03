@@ -57,18 +57,39 @@ def generate_content_route():
 
 @app.route('/generate-profile', methods=['POST'])
 def generate_profile_route():
+  print("generate-profile endpoint called")
   
   if 'file' not in request.files:
-    return 'No file part'
+    print("Error: No file in request")
+    return jsonify({"error": "No file part in request"}), 400
   
   file = request.files['file']
+  if not file.filename:
+    print("Error: Empty filename")
+    return jsonify({"error": "No file selected"}), 400
+  
   system_instruction = request.form.get('system_instruction', '')
+  if not system_instruction:
+    print("Error: No system instruction provided")
+    return jsonify({"error": "No system instruction provided"}), 400
+  
+  print(f"Processing file: {file.filename}")
+  print(f"System instruction length: {len(system_instruction)}")
 
   try:
     result = generate_content_with_file(file, system_instruction)
+    if result is None:
+      print("Error: generate_content_with_file returned None")
+      return jsonify({"error": "Failed to generate content - API returned no data"}), 500
+    print(f"Successfully generated profile data: {str(result)[:200]}...")
+    return jsonify(result)
+  except ValueError as e:
+    print(f"ValueError in generate_profile: {e}")
+    return jsonify({"error": str(e)}), 500
   except Exception as e:
-    raise
-  return result
+    print(f"Unexpected error in generate_profile: {type(e).__name__}: {e}")
+    return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
 # Route for seeing a data
 @app.route('/')
 def get_time():
