@@ -38,16 +38,16 @@ const OnboardMethod = (props: OnboardPageProps) => {
   const [gender, setGender] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [addressInstructionStatus, setAddressInstructionStatus] = useState<
-    "loading" | "done" | "error"
-  >("loading");
+    "loading" | "done" | "error" | undefined
+  >(undefined);
   const [transportationInstructionStatus, setTransportationInstructionStatus] =
-    useState<"loading" | "done" | "error">("loading");
+    useState<"loading" | "done" | "error" | undefined>(undefined);
   const [categoriesInstructionStatus, setCategoriesInstructionStatus] =
-    useState<"loading" | "done" | "error">("loading");
+    useState<"loading" | "done" | "error" | undefined>(undefined);
   const [
     socialPreferencesInstructionStatus,
     setSocialPreferencesInstructionStatus,
-  ] = useState<"loading" | "done" | "error">("loading");
+  ] = useState<"loading" | "done" | "error" | undefined>(undefined);
 
   // Load existing progress from Firebase on mount
   useEffect(() => {
@@ -60,29 +60,21 @@ const OnboardMethod = (props: OnboardPageProps) => {
           // Check for address data
           if (userData.homeAddress || userData.workAddress) {
             setAddressInstructionStatus("done");
-          } else {
-            setAddressInstructionStatus("loading");
           }
 
           // Check for transportation data
           if (userData.transportations && Object.keys(userData.transportations).length > 0) {
             setTransportationInstructionStatus("done");
-          } else {
-            setTransportationInstructionStatus("loading");
           }
 
           // Check for categories data
           if (userData.categories && Object.keys(userData.categories).length > 0) {
             setCategoriesInstructionStatus("done");
-          } else {
-            setCategoriesInstructionStatus("loading");
           }
 
           // Check for social preferences data
           if (userData.socialPreferences && Object.keys(userData.socialPreferences).length > 0) {
             setSocialPreferencesInstructionStatus("done");
-          } else {
-            setSocialPreferencesInstructionStatus("loading");
           }
 
           if (userData.birthday && userData.gender) {
@@ -92,11 +84,6 @@ const OnboardMethod = (props: OnboardPageProps) => {
             fetchGoogleInfo();
           }
         } else {
-          // Initialize states if no user data found
-          setAddressInstructionStatus("loading");
-          setTransportationInstructionStatus("loading");
-          setCategoriesInstructionStatus("loading");
-          setSocialPreferencesInstructionStatus("loading");
           fetchGoogleInfo();
         }
       }).catch((error) => {
@@ -438,7 +425,7 @@ const OnboardMethod = (props: OnboardPageProps) => {
         Let’s Make Your New City Feel Like Home
       </Typography>
       <Typography variant="body2" sx={{ textAlign: "center" }}>
-        Nested leverages Gemini 1.5 (Google’s LLM) to find places in your new
+        Nested leverages Gemini 2.5 (Google’s LLM) to find places in your new
         city that can facilitate your lifestyle.
       </Typography>
       <Typography variant="body2" mb="1.5rem" sx={{ textAlign: "center" }}>
@@ -573,7 +560,11 @@ const OnboardMethod = (props: OnboardPageProps) => {
               </Button>
             </label>
 
-            {loading ? (
+            {loading ||
+              addressInstructionStatus === "done" ||
+              transportationInstructionStatus === "done" ||
+              categoriesInstructionStatus === "done" ||
+              socialPreferencesInstructionStatus === "done" ? (
               <Stack
                 direction={"row"}
                 justifyContent={"space-around"}
